@@ -8,12 +8,13 @@
 #include<netinet/in.h>
 #include <string.h>
 
-int isAuthenticated(char client_number[], char client_username[], char client_type[]);
+int isAuthenticated(int client_number, char client_username[], char client_type[]);
 
 /*---------------------------------------------Client-------------------------------------------*/
 int main(int argc, char * argv[]){
     struct sockaddr_in serv;
-    char client_username[20], client_password[20], client_type[20];
+    char client_name[20], client_password[20], client_type[20];
+    int client_id;
     int sd, connection_status, type;
     int client_number = 23;
     sd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -26,35 +27,88 @@ int main(int argc, char * argv[]){
     }
 
 /*--------------------------------------------Initialization------------------------------------*/
+    int choice;
     write(sd, &client_number, sizeof(client_number));
-    read(sd, &client_number, sizeof(client_number));
-    printf("Server Says : %d\n", client_number);
-    printf("Enter username : \n");
-    scanf("%s", client_username);
-    printf("Enter password : \n");
-    scanf("%s", client_password);
-    printf("Select Type of user : \n");
-    printf("1.Customer\n");
-    printf("2.Admin\n");
-    printf("3.Agent\n");
-    scanf("%d", &type);
-    while(!isAuthenticated(client_number, client_password, client_type)){
+    //read(sd, &client_number, sizeof(client_number));
+    //printf("Server Says : %d\n", client_number);
+    printf("Select the type : \n");
+    printf("1.Login\n");
+    printf("2.Sign Up\n");
+    scanf("%d", &choice);
+    while(choice != 1 && choice != 2){
+        printf("Warning : Please select the valid option\n");
+        scanf("%d", &choice);
+    }
+    if(choice == 1){ //Login 
+        printf("Enter user id : \n");
+        scanf("%d", &client_id);
+        printf("Enter Name : \n");
+        scanf("%s", client_name);
         printf("Enter password : \n");
         scanf("%s", client_password);
+        printf("Enter type of User : \n");
+
+        printf("1.Customer\n");
+        printf("2.Admin\n");
+        printf("3.Agent\n");
+        scanf("%d", &type);
+        if(type == 1){
+            strcpy(client_type, "customer");
+        }
+        else if(type == 2){
+            strcpy(client_type, "admin");
+        }
+        else{
+            strcpy(client_type, "agent");
+        }
+        write(sd, &client_id, sizeof(client_id));
+        write(sd, &client_name, sizeof(client_name));
+        write(sd, &client_password, sizeof(client_password));
+        write(sd, &client_type, sizeof(client_type));
+        int val = 1;
+        write(sd, &val, sizeof(val));
+        /*
+        Can add if user doesn't exist u can call signup function
+        */
+        
     }
-    if(type == 1){
-        strcpy(client_type, "customer");
-    }
-    else if(type == 2){
-        strcpy(client_type, "admin");
-    }
-    else{
-        strcpy(client_type, "agent");
+    else if(choice == 2){//Signup
+        //signup();
+        printf("Enter user id : \n");
+        scanf("%d", &client_id);
+        printf("Enter Name : \n");
+        scanf("%s", client_name);
+        printf("Enter password : \n");
+        scanf("%s", client_password);
+        printf("Select Type of user : \n");
+        printf("1.Customer\n");
+        printf("2.Admin\n");
+        printf("3.Agent\n");
+        scanf("%d", &type);
+        if(type == 1){
+            strcpy(client_type, "customer");
+        }
+        else if(type == 2){
+            strcpy(client_type, "admin");
+        }
+        else{
+            strcpy(client_type, "agent");
+        }
+        write(sd, &client_id, sizeof(client_id));
+        write(sd, &client_name, sizeof(client_name));
+        write(sd, &client_password, sizeof(client_password));
+        write(sd, &client_type, sizeof(client_type));
+        int val = 2;
+        write(sd, &val, sizeof(val));
     }
 
-    write(sd, &client_username, sizeof(client_username));
-    write(sd, &client_password, sizeof(client_password));
-    write(sd, &client_type, sizeof(client_type));
+    // while(!isAuthenticated(client_number, client_password, client_type)){
+    //     printf("Enter password : \n");
+    //     scanf("%s", client_password);
+    // }
+    
+
+ 
 
     
 
