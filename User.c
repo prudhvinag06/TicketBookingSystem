@@ -16,8 +16,8 @@ int main(int argc, char * argv[]){
     int client_id;
     int sd, connection_status, type;
     int client_number = 23;
-    sd = socket(AF_UNIX, SOCK_STREAM, 0);
-    serv.sin_family = AF_UNIX;
+    sd = socket(AF_INET, SOCK_STREAM, 0);
+    serv.sin_family = AF_INET;
     serv.sin_addr.s_addr = INADDR_ANY;   //inet_addr("ser ip") //in case of not a local host  
     serv.sin_port = htons(port);
     connection_status = connect(sd, (struct sockaddr *) &serv, sizeof(serv));
@@ -65,6 +65,16 @@ int main(int argc, char * argv[]){
         write(sd, &client_name, sizeof(client_name));
         write(sd, &client_password, sizeof(client_password));
         write(sd, &client_type, sizeof(client_type));
+        int auth = 0;
+        //authenticate password
+        read(sd, &auth, sizeof(auth));
+        while(auth == 0){
+            printf("Error!. Please Enter Password again \n");
+            scanf("%s", client_password);
+            write(sd, &client_password, sizeof(client_password));
+            read(sd, &auth, sizeof(auth));
+            printf("Auth value : %d\n", auth);
+        }
         /*
         Can add if user doesn't exist u can call signup function
         */
@@ -101,10 +111,4 @@ int main(int argc, char * argv[]){
         read(sd, &user_id, sizeof(user_id));
         printf("Login id of user : %d\n", user_id);
     }
-
-    // while(!isAuthenticated(client_number, client_password, client_type)){
-    //     printf("Enter password : \n");
-    //     scanf("%s", client_password);
-    // }
-   // close(sd);
 }

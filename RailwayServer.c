@@ -8,10 +8,13 @@
 #include<netinet/in.h>
 #include <string.h>
 
+
 #define path "/home/prudhvi/Desktop/IIITB/SS/assignments/mini_proj/Database/"
 #define maxUsers 5
 #define maxAgents 5 
 #define port 5555
+
+
 static int id = 1;
 struct user{
     int user_id;
@@ -32,6 +35,10 @@ struct agent{
     int user_type;
 };
 
+
+
+
+int isAuthenticated(int nsd, int id, char password[30], int type);
 void client_handler(struct sockaddr_in cli, int sd);
 void admin_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]);
 void customer_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]);
@@ -42,8 +49,8 @@ int main(){
     struct sockaddr_in serv, cli;
     int sd, sz, nsd;
     char buf[80];
-    sd = socket(AF_UNIX, SOCK_STREAM, 0);
-    serv.sin_family = AF_UNIX;
+    sd = socket(AF_INET, SOCK_STREAM, 0);
+    serv.sin_family = AF_INET;
     serv.sin_addr.s_addr = INADDR_ANY; //specify ip address in double quotes. Else if its same machine we can specify like this.
     serv.sin_port = htons(port);
 
@@ -156,16 +163,50 @@ void signup(int nsd, char username[30], char password[30], char typeofuser[30]){
 }
 void login(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
     if(strcmp(typeofuser, "customer") == 0){
+        int x = 0;
+        //customer authentication
+        while(!isAuthenticated(nsd, userid, password, 1)){
+            write(nsd, &x, sizeof(x));
+            char pass[30];
+            read(nsd, &pass, sizeof(pass));
+            strcpy(password, pass);
+        }
+        x = 1;
+        write(nsd, &x, sizeof(x));
+        printf("User Login successful\n");
         customer_handler(nsd, userid, username, password, typeofuser);
     }
     else if(strcmp(typeofuser, "agent") == 0){
+        int x = 0;
+        //AGENT authentication
+        while(!isAuthenticated(nsd, userid, password, 2)){
+            write(nsd, &x, sizeof(x));
+            char pass[30];
+            read(nsd, &pass, sizeof(pass));
+            strcpy(password, pass);
+        }
+        x = 1;
+        write(nsd, &x, sizeof(x));
+        printf("User Login successful\n");
         agent_handler(nsd, userid, username, password, typeofuser);
     }   
     else if(strcmp(typeofuser, "admin") == 0){
+        int x = 0;
+        //ADMIN authentication
+        while(!isAuthenticated(nsd, userid, password, 3)){
+            write(nsd, &x, sizeof(x));
+            char pass[30];
+            read(nsd, &pass, sizeof(pass));
+            strcpy(password, pass);
+        }
+        x = 1;
+        write(nsd, &x, sizeof(x));
+        printf("User Login successful\n");
         admin_handler(nsd, userid, username, password, typeofuser);
     }
 }
 
+/*--------------------------------------------handler---------------------------------------------------------*/
 void customer_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
     struct user db; 
     db.user_id = id;    
@@ -175,10 +216,52 @@ void customer_handler(int nsd, int userid, char username[30], char password[30],
     printf("cust was selected\n");
     
     //setting file
-    char path_userdb[100] = path; 
-    strcat(path_userdb, "user_db.txt");
-    int fd_cust = open(path_userdb, O_RDWR, 00777);
+    char path_db[100] = path; 
+    strcat(path_db, "user_db.txt");
+    int fd_cust = open(path_db, O_RDWR, 00777);
 
+    lseek(fd_cust, (userid - 1) * sizeof(db), SEEK_SET);
+    read(fd_cust, &db, sizeof(db));
+
+    printf("Name : %s\n", db.user_name);
+    printf("Pass : %s\n", db.password);
+}
+void agent_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
+    printf("AGENT AUTH SUCCESSFUL");
+    struct user db; 
+    db.user_id = id;    
+    strcpy(db.user_name, username);
+    strcpy(db.password, password);
+    db.user_type = 1;
+   
+    
+    //setting file
+    char path_db[100] = path; 
+    strcat(path_db, "agent_db.txt");
+    int fd_cust = open(path_db, O_RDWR, 00777);
+
+    lseek(fd_cust, (userid - 1) * sizeof(db), SEEK_SET);
+    read(fd_cust, &db, sizeof(db));
+
+    printf("Name : %s\n", db.user_name);
+    printf("Pass : %s\n", db.password);
+}
+void admin_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
+    printf("admin was selected\n");
+    /*
+    todo : add password authentication
+    */
+    struct user db; 
+    db.user_id = id;    
+    strcpy(db.user_name, username);
+    strcpy(db.password, password);
+    db.user_type = 1;
+    printf("cust was selected\n");
+    
+    //setting file
+    char path_db[100] = path; 
+    strcat(path_db, "admin_db.txt");
+    int fd_cust = open(path_db, O_RDWR, 00777);
 
     lseek(fd_cust, (userid - 1) * sizeof(db), SEEK_SET);
     read(fd_cust, &db, sizeof(db));
@@ -187,12 +270,25 @@ void customer_handler(int nsd, int userid, char username[30], char password[30],
     printf("Pass : %s\n", db.password);
 }
 
-void agent_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
-    printf("agent was selected\n");
-
+/*-------------------------------------------------Authentication----------------------------------------------*/
+int isAuthenticated(int nsd, int userid, char password[30], int type){
+    struct user db;
+    char path_db[100] = path; 
+    if(type == 1){
+        strcat(path_db, "user_db.txt");
+    }
+    else if(type == 2){
+        strcat(path_db, "agent_db.txt");
+    }
+    else {
+        strcat(path_db, "admin_db.txt");
+    }
+    int fd = open(path_db, O_RDWR, 00777);    
+    lseek(fd, (userid - 1) * sizeof(db), SEEK_SET);
+    read(fd, &db, sizeof(db));
+    
+    if(strcmp(password, db.password) == 0)
+    return 1;
+    else
+    return 0;
 }
-void admin_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
-    printf("admin was selected\n");
-}
-
-
