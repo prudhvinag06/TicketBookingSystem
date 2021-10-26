@@ -7,9 +7,8 @@
 #include <arpa/inet.h> 
 #include<netinet/in.h>
 #include <string.h>
-
+#define port 5555
 int isAuthenticated(int client_number, char client_username[], char client_type[]);
-
 /*---------------------------------------------Client-------------------------------------------*/
 int main(int argc, char * argv[]){
     struct sockaddr_in serv;
@@ -20,12 +19,11 @@ int main(int argc, char * argv[]){
     sd = socket(AF_UNIX, SOCK_STREAM, 0);
     serv.sin_family = AF_UNIX;
     serv.sin_addr.s_addr = INADDR_ANY;   //inet_addr("ser ip") //in case of not a local host  
-    serv.sin_port = htons(5555);
+    serv.sin_port = htons(port);
     connection_status = connect(sd, (struct sockaddr *) &serv, sizeof(serv));
     if(connection_status == -1){
         printf("Error\n");
     }
-
 /*--------------------------------------------Initialization------------------------------------*/
     int choice;
     write(sd, &client_number, sizeof(client_number));
@@ -47,7 +45,6 @@ int main(int argc, char * argv[]){
         printf("Enter password : \n");
         scanf("%s", client_password);
         printf("Enter type of User : \n");
-
         printf("1.Customer\n");
         printf("2.Admin\n");
         printf("3.Agent\n");
@@ -61,21 +58,22 @@ int main(int argc, char * argv[]){
         else{
             strcpy(client_type, "agent");
         }
+        // write(sd, &client_id, sizeof(client_id));
+        int val = 1;
+        write(sd, &val, sizeof(val));
         write(sd, &client_id, sizeof(client_id));
         write(sd, &client_name, sizeof(client_name));
         write(sd, &client_password, sizeof(client_password));
         write(sd, &client_type, sizeof(client_type));
-        int val = 1;
-        write(sd, &val, sizeof(val));
         /*
         Can add if user doesn't exist u can call signup function
         */
-        
     }
     else if(choice == 2){//Signup
         //signup();
-        printf("Enter user id : \n");
-        scanf("%d", &client_id);
+        // printf("Enter user id : \n");
+        // scanf("%d", &client_id);
+        int user_id;
         printf("Enter Name : \n");
         scanf("%s", client_name);
         printf("Enter password : \n");
@@ -94,23 +92,19 @@ int main(int argc, char * argv[]){
         else{
             strcpy(client_type, "agent");
         }
-        write(sd, &client_id, sizeof(client_id));
+        // write(sd, &client_id, sizeof(client_id));
+        int val = 2;
+        write(sd, &val, sizeof(val));
         write(sd, &client_name, sizeof(client_name));
         write(sd, &client_password, sizeof(client_password));
         write(sd, &client_type, sizeof(client_type));
-        int val = 2;
-        write(sd, &val, sizeof(val));
+        read(sd, &user_id, sizeof(user_id));
+        printf("Login id of user : %d\n", user_id);
     }
 
     // while(!isAuthenticated(client_number, client_password, client_type)){
     //     printf("Enter password : \n");
     //     scanf("%s", client_password);
     // }
-    
-
- 
-
-    
-
    // close(sd);
 }
