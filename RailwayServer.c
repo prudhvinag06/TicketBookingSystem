@@ -34,9 +34,12 @@ struct agent{
     char password[30];
     int user_type;
 };
-
-
-
+struct train{
+    int train_id;
+    char train_name[30];
+    int total_seats;
+    int available_seats;
+};
 
 int isAuthenticated(int nsd, int id, char password[30], int type);
 void client_handler(struct sockaddr_in cli, int sd);
@@ -45,6 +48,7 @@ void customer_handler(int nsd, int userid, char username[30], char password[30],
 void agent_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]);
 void login(int nsd, int userid, char username[30], char password[30], char typeofuser[30]);
 void signup(int nsd, char username[30], char password[30], char typeofuser[30]);
+void viewRecords(int nsd);
 int main(){
     struct sockaddr_in serv, cli;
     int sd, sz, nsd;
@@ -208,6 +212,10 @@ void login(int nsd, int userid, char username[30], char password[30], char typeo
 
 /*--------------------------------------------handler---------------------------------------------------------*/
 void customer_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
+    printf("<-----------------CUST HANDLER WAS RUNNING------------------->\n");
+    int choice;
+    read(nsd, &choice, sizeof(choice));
+    printf("Choice from customer : %d\n", choice);
     struct user db; 
     db.user_id = id;    
     strcpy(db.user_name, username);
@@ -227,7 +235,11 @@ void customer_handler(int nsd, int userid, char username[30], char password[30],
     printf("Pass : %s\n", db.password);
 }
 void agent_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
-    printf("AGENT AUTH SUCCESSFUL");
+    printf("<-----------------AGENT HANDLER WAS RUNNING-------------------->\n");
+    int choice;
+    read(nsd, &choice, sizeof(choice));
+    printf("Choice from agent : %d\n", choice);
+    
     struct user db; 
     db.user_id = id;    
     strcpy(db.user_name, username);
@@ -247,10 +259,10 @@ void agent_handler(int nsd, int userid, char username[30], char password[30], ch
     printf("Pass : %s\n", db.password);
 }
 void admin_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
-    printf("admin was selected\n");
-    /*
-    todo : add password authentication
-    */
+    printf("<-----------------ADMIN HANDLER WAS RUNNING------------------->\n");
+    int choice;
+    read(nsd, &choice, sizeof(choice));
+    printf("Choice from admin : %d\n", choice);    
     struct user db; 
     db.user_id = id;    
     strcpy(db.user_name, username);
@@ -268,6 +280,33 @@ void admin_handler(int nsd, int userid, char username[30], char password[30], ch
 
     printf("Name : %s\n", db.user_name);
     printf("Pass : %s\n", db.password);
+
+
+    if(choice == 1){ //users list
+        read(nsd, &choice, sizeof(choice));
+        switch (choice)
+        {
+        case 1:
+            viewRecords(nsd);
+            break;
+        case 2:
+            break;
+        case 3:
+            //deleteUser();
+            break;
+        case 4:
+            //modifyUser();
+            break;
+        case 5:
+            //searchUser();
+            break;
+        default:
+            break;
+        }
+    }
+    else if(choice == 2){ //trains list
+        
+    }
 }
 
 /*-------------------------------------------------Authentication----------------------------------------------*/
@@ -291,4 +330,24 @@ int isAuthenticated(int nsd, int userid, char password[30], int type){
     return 1;
     else
     return 0;
+}
+
+void viewRecords(int nsd){
+    printf("<----------------------viewRecords()-------------------------->\n");
+    struct user db; 
+    int count = 0;
+    char path_db[100] = path; 
+    strcat(path_db, "user_db.txt");
+    int fd_cust = open(path_db, O_RDWR, 00777);
+    lseek(fd_cust, 0 * sizeof(db), SEEK_SET);
+    while(read(fd_cust, &db, sizeof(db))){
+        count++;
+    }
+    write(nsd, &count, sizeof(count));
+    lseek(fd_cust, 0 * sizeof(db), SEEK_SET);
+    while(read(fd_cust, &db, sizeof(db))){
+        write(nsd, &db.user_name, sizeof(db.user_name));
+        write(nsd, &db.user_id, sizeof(db.user_id));
+        /*todo: Add seats */
+    }
 }
