@@ -21,6 +21,7 @@ struct user{
     char user_name[30];
     char password[30];
     int user_type;
+    int flag;
 };
 struct admin{
     int user_id;
@@ -33,12 +34,15 @@ struct agent{
     char user_name[30];
     char password[30];
     int user_type;
+    int flag;
 };
 struct train{
     int train_id;
     char train_name[30];
     int total_seats;
     int available_seats;
+    char src[20];
+    char dest[20];
 };
 
 int isAuthenticated(int nsd, int id, char password[30], int type);
@@ -50,6 +54,8 @@ void login(int nsd, int userid, char username[30], char password[30], char typeo
 void signup(int nsd, char username[30], char password[30], char typeofuser[30]);
 void signup_admin(int nsd);
 void viewRecords(int nsd);
+void deleteRecord(int nsd);
+int isExists(int nsd, int id, char password[30], int type);
 int main(){
     struct sockaddr_in serv, cli;
     int sd, sz, nsd;
@@ -111,6 +117,7 @@ void signup(int nsd, char username[30], char password[30], char typeofuser[30]){
     db.user_id = id;    
     strcpy(db.user_name, username);
     strcpy(db.password, password);
+    db.flag = 1;
     if(strcmp(typeofuser, "customer") == 0){ //customer
         db.user_type = 1;
         char path_userdb[100] = path; 
@@ -170,16 +177,23 @@ void login(int nsd, int userid, char username[30], char password[30], char typeo
     if(strcmp(typeofuser, "customer") == 0){
         int x = 0;
         //customer authentication
-        while(!isAuthenticated(nsd, userid, password, 1)){
+        if(isExists(nsd, userid, password, 1)){
+            while(!isAuthenticated(nsd, userid, password, 1)){
+                write(nsd, &x, sizeof(x));
+                char pass[30];
+                read(nsd, &pass, sizeof(pass));
+                strcpy(password, pass);
+            }
+            x = 1;
             write(nsd, &x, sizeof(x));
-            char pass[30];
-            read(nsd, &pass, sizeof(pass));
-            strcpy(password, pass);
+            printf("User Login successful\n");
+            customer_handler(nsd, userid, username, password, typeofuser);
         }
-        x = 1;
-        write(nsd, &x, sizeof(x));
-        printf("User Login successful\n");
-        customer_handler(nsd, userid, username, password, typeofuser);
+        else{
+            x = -1;
+            write(nsd, &x, sizeof(x));
+            printf("<--------------User Doesn't exist------------>\n");
+        }
     }
     else if(strcmp(typeofuser, "agent") == 0){
         int x = 0;
@@ -285,11 +299,15 @@ void admin_handler(int nsd, int userid, char username[30], char password[30], ch
     if(choice == 1){  //users list
         read(nsd, &choice, sizeof(choice));
         printf("Users List was selected\n");
+        printf("Choice : %d\n", choice);
         if(choice == 1){
             viewRecords(nsd);
         }
         else if(choice == 2){
             signup_admin(nsd);
+        }
+        else if(choice == 3){
+            deleteRecord(nsd);
         }
     }
     else if(choice == 2){ //trains list
@@ -328,16 +346,32 @@ void viewRecords(int nsd){
     strcat(path_db, "user_db.txt");
     int fd_cust = open(path_db, O_RDWR, 00777);
     lseek(fd_cust, 0 * sizeof(db), SEEK_SET);
-    while(read(fd_cust, &db, sizeof(db))){
-        count++;
-    }
-    write(nsd, &count, sizeof(count));
+    int fp = lseek(fd_cust, 0, SEEK_END);
+    //count = fp / sizeof(db);
     lseek(fd_cust, 0 * sizeof(db), SEEK_SET);
     while(read(fd_cust, &db, sizeof(db))){
-        write(nsd, &db.user_name, sizeof(db.user_name));
-        write(nsd, &db.user_id, sizeof(db.user_id));
+        if(db.flag == 1)
+        count++;
         /*todo: Add seats */
     }
+    printf("count : %d", count);
+    if(count > 0){
+        write(nsd, &count, sizeof(count));
+        lseek(fd_cust, 0 * sizeof(db), SEEK_SET);
+        while(read(fd_cust, &db, sizeof(db))){
+            if(db.flag == 1){
+                write(nsd, &db.user_name, sizeof(db.user_name));
+                write(nsd, &db.user_id, sizeof(db.user_id));
+            }
+        /*todo: Add seats */
+        }
+    }
+    else{
+        count = -1;
+        write(nsd, &count, sizeof(count));
+        printf("<--------NO USERS IN DB------->\n");  
+    }
+    
 }
 
 void signup_admin(int nsd){
@@ -350,3 +384,46 @@ void signup_admin(int nsd){
     printf("dasfdsf");
     signup(nsd, username, password, typeofuser);
 }
+
+int isExists(int nsd, int id, char password[30], int type){
+    struct user db;
+    char path_db[100] = path; 
+    if(type == 1){
+        strcat(path_db, "user_db.txt");
+    }
+    else if(type == 2){
+        strcat(path_db, "agent_db.txt");
+    }
+    else {
+        strcat(path_db, "admin_db.txt");
+    }
+    int fd = open(path_db, O_RDWR, 00777);    
+    lseek(fd, (id - 1) * sizeof(db), SEEK_SET);
+    read(fd, &db, sizeof(db));
+    
+    if(db.flag == 0)
+    return 0;
+    else
+    return 1;
+}
+
+void deleteRecord(int nsd){
+    int user_id;
+    struct user db;
+    int count = 0;
+    char path_db[100] = path; 
+    strcat(path_db, "user_db.txt"); 
+    int fd_cust = open(path_db, O_RDWR, 00777);
+    read(nsd, &user_id, sizeof(user_id));
+    printf("user id from client : %d\n", user_id);
+    lseek(fd_cust, (user_id - 1) * sizeof(db), SEEK_SET);
+    read(fd_cust,&db, sizeof(db));
+    printf("name : %s\n", db.user_name);
+    db.flag = 0;
+    lseek(fd_cust, (user_id - 1) * sizeof(db), SEEK_SET);
+    write(fd_cust, &db, sizeof(db));
+
+
+}
+
+

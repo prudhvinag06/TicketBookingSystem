@@ -12,6 +12,8 @@ int isAuthenticated(int client_number, char client_username[], char client_type[
 void helper(int sd, int client_id, char client_type[30]);
 void viewRecords(int sd);
 void signup(int sd);
+void deleteUser(int sd);
+
 
 
 /*---------------------------------------------Client-------------------------------------------*/
@@ -73,15 +75,21 @@ int main(int argc, char * argv[]){
         int auth = 0;
         //authenticate password
         read(sd, &auth, sizeof(auth));
-        while(auth == 0){
-            printf("Error!. Please Enter Password again \n");
-            scanf("%s", client_password);
-            write(sd, &client_password, sizeof(client_password));
-            read(sd, &auth, sizeof(auth));
-            printf("Auth value : %d\n", auth);
+        if(auth == -1){
+            printf("User Doesn't Exist in Database\n");
         }
+        else{
+            while(auth == 0){
+                printf("Error!. Please Enter Password again \n");
+                scanf("%s", client_password);
+                write(sd, &client_password, sizeof(client_password));
+                read(sd, &auth, sizeof(auth));
+                printf("Auth value : %d\n", auth);
+            }
         printf("\tLOGGED IN SUCCESSFULLY\n");
         helper(sd, client_id, client_type);
+        }
+        
         /*
         Can add if user doesn't exist u can call signup function
         */
@@ -148,6 +156,9 @@ void helper(int sd, int client_id, char client_type[30]){
         printf("2. Train Accounts \n");
         scanf("%d", &choice);
         write(sd, &choice, sizeof(choice));
+        
+        
+        
         if(choice == 1){ //users
             printf("1. View Users \n");
             printf("2. Add User\n");
@@ -168,7 +179,7 @@ void helper(int sd, int client_id, char client_type[30]){
             signup(sd);
             break;
             case 3:
-            //deleteUser();
+            deleteUser(sd);
             break;
             case 4:
             //modifyUser();
@@ -189,21 +200,28 @@ void helper(int sd, int client_id, char client_type[30]){
             scanf("%d", &choice);
             write(sd, &choice, sizeof(choice));
         }
+        
 
 
     }
 
 }
 void viewRecords(int sd){
-   int user_id, count;
+   int user_id, count = 0;
    char user_name[30];
    read(sd, &count, sizeof(count));
-   printf("Total Number of users : %d\n", count);
-   while(count--){
-       read(sd, &user_name, sizeof(user_name));
-       read(sd, &user_id, sizeof(user_id));
-       printf("USER ID: %d  USER NAME : %s\n", user_id, user_name);
+   if(count > 0){
+        printf("Total Number of users : %d\n", count);
+        while(count--){
+            read(sd, &user_name, sizeof(user_name));
+            read(sd, &user_id, sizeof(user_id));
+            printf("USER ID: %d  USER NAME : %s\n", user_id, user_name);
+        }
    }
+   else{
+       printf("<--------NO USERS IN DB------->\n");
+   }
+  
     
 }
 
@@ -238,4 +256,12 @@ void signup(int sd){
         sleep(5);
         read(sd, &user_id, sizeof(user_id));
         printf("Login id of user : %d\n", user_id);
+}
+
+void deleteUser(int sd){
+    int user_id;
+    printf("Select the User you want to delete : \n");
+    scanf("%d", &user_id);
+    write(sd, &user_id, sizeof(user_id));
+    printf("<-----------------DELETION SUCCESS-------------------->\n");
 }
