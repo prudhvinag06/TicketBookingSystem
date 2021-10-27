@@ -12,7 +12,7 @@
 #define path "/home/prudhvi/Desktop/IIITB/SS/assignments/mini_proj/Database/"
 #define maxUsers 5
 #define maxAgents 5 
-#define port 5555
+#define port 12322
 
 
 static int id = 1;
@@ -48,6 +48,7 @@ void customer_handler(int nsd, int userid, char username[30], char password[30],
 void agent_handler(int nsd, int userid, char username[30], char password[30], char typeofuser[30]);
 void login(int nsd, int userid, char username[30], char password[30], char typeofuser[30]);
 void signup(int nsd, char username[30], char password[30], char typeofuser[30]);
+void signup_admin(int nsd);
 void viewRecords(int nsd);
 int main(){
     struct sockaddr_in serv, cli;
@@ -280,32 +281,19 @@ void admin_handler(int nsd, int userid, char username[30], char password[30], ch
 
     printf("Name : %s\n", db.user_name);
     printf("Pass : %s\n", db.password);
-
-
-    if(choice == 1){ //users list
+    printf("Reached before choice %d\n", choice);
+    if(choice == 1){  //users list
         read(nsd, &choice, sizeof(choice));
-        switch (choice)
-        {
-        case 1:
+        printf("Users List was selected\n");
+        if(choice == 1){
             viewRecords(nsd);
-            break;
-        case 2:
-            break;
-        case 3:
-            //deleteUser();
-            break;
-        case 4:
-            //modifyUser();
-            break;
-        case 5:
-            //searchUser();
-            break;
-        default:
-            break;
+        }
+        else if(choice == 2){
+            signup_admin(nsd);
         }
     }
     else if(choice == 2){ //trains list
-        
+        printf("Trains List was selected\n");
     }
 }
 
@@ -350,4 +338,15 @@ void viewRecords(int nsd){
         write(nsd, &db.user_id, sizeof(db.user_id));
         /*todo: Add seats */
     }
+}
+
+void signup_admin(int nsd){
+    char username[30], password[30], typeofuser[30];
+    printf("reached signup_admin page\n");
+    read(nsd, &username, sizeof(username));
+    printf("reached signup_admin page\n");
+    read(nsd, &password, sizeof(password));
+    read(nsd, &typeofuser, sizeof(typeofuser));
+    printf("dasfdsf");
+    signup(nsd, username, password, typeofuser);
 }
