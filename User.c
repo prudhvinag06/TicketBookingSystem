@@ -7,10 +7,11 @@
 #include <arpa/inet.h> 
 #include<netinet/in.h>
 #include <string.h>
-#define port 5555
+#define port 12322
 int isAuthenticated(int client_number, char client_username[], char client_type[]);
 void helper(int sd, int client_id, char client_type[30]);
 void viewRecords(int sd);
+void signup(int sd);
 
 
 /*---------------------------------------------Client-------------------------------------------*/
@@ -129,7 +130,6 @@ void helper(int sd, int client_id, char client_type[30]){
         type = 2; 
     }
     else type = 3;
-
     if(type == 1 || type == 2){
         int choice;
         printf("Select Options Below : \n");
@@ -156,13 +156,16 @@ void helper(int sd, int client_id, char client_type[30]){
             printf("4. Modify User\n");
             printf("5. Search\n");
             scanf("%d", &choice);
-            write(sd, &choice, sizeof(choice));
+            printf("choice : %d\n", choice);
+            int x = write(sd, &choice, sizeof(choice));
+            printf("%d\n",x);
             switch (choice)
             {
             case 1:
             viewRecords(sd);
             break;
             case 2:
+            signup(sd);
             break;
             case 3:
             //deleteUser();
@@ -202,4 +205,37 @@ void viewRecords(int sd){
        printf("USER ID: %d  USER NAME : %s\n", user_id, user_name);
    }
     
+}
+
+void signup(int sd){
+        int user_id, type, id;
+        char client_name[20], client_password[20], client_type[20];
+        printf("Enter Name : \n");
+        scanf("%s", client_name);
+        printf("Enter password : \n");
+        scanf("%s", client_password);
+        printf("Select Type of user : \n");
+        printf("1. Customer\n");
+        printf("2. Admin\n");
+        printf("3. Agent\n");
+        scanf("%d", &type);
+        if(type == 1){
+            strcpy(client_type, "customer");
+        }
+        else if(type == 2){
+            strcpy(client_type, "admin");
+        }
+        else{
+            strcpy(client_type, "agent");
+        }
+        int x = write(sd, &client_name, sizeof(client_name));
+        printf("x : %d",x);
+        sleep(1);
+        write(sd, &client_password, sizeof(client_password));
+        sleep(1);
+
+        write(sd, &client_type, sizeof(client_type));
+        sleep(5);
+        read(sd, &user_id, sizeof(user_id));
+        printf("Login id of user : %d\n", user_id);
 }
