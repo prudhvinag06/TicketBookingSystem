@@ -13,8 +13,6 @@
 #define maxUsers 5
 #define maxAgents 5 
 #define port 12322
-
-
 static int id = 1;
 static int train_id = 1;
 struct user{
@@ -41,9 +39,10 @@ struct train{
     int train_id;
     char train_name[30];
     int total_seats;
-    int available_seats;
+    int occupied_seats;
     char src[20];
     char dest[20];
+    int flag;
 };
 
 int isAuthenticated(int nsd, int id, char password[30], int type);
@@ -59,6 +58,10 @@ void deleteRecord(int nsd);
 int isExists(int nsd, int id, char password[30], int type);
 void searchUser(int nsd);
 void unlock(int fd, struct flock lock);
+void addTrains(int nsd);
+void viewTrains(int nsd);
+void deleteTrain(int nsd);
+void searchTrain(int nsd);
 int main(){
     struct sockaddr_in serv, cli;
     int sd, sz, nsd;
@@ -405,9 +408,130 @@ void admin_handler(int nsd, int userid, char username[30], char password[30], ch
     }
     else if(choice == 2){ //trains list
         printf("Trains List was selected\n");
+        read(nsd, &choice, sizeof(choice));
+        printf("Admin Train choice was : %d\n", choice);
+        if(choice == 1){
+            viewTrains(nsd);
+            //view trains
+        }
+        else if(choice == 2){
+            addTrains(nsd);
+            //add trains
+        }
+        else if(choice == 3){
+            //delete trains
+        }
+        else if(choice == 5){
+            //search train
+        }
     }
 }
 
+void addTrains(int nsd){
+    int x = 5, total_seats = 0;
+    char train_name[30], train_source[30], train_dest[30];
+    struct train train_db;
+
+    read(nsd, &train_name, sizeof(train_name));
+    read(nsd, &total_seats, sizeof(total_seats));
+    read(nsd, &train_source, sizeof(train_source));
+    read(nsd, &train_dest, sizeof(train_dest));
+    printf("train name : %s\n", train_name);
+    train_db.total_seats = total_seats;
+    strcpy(train_db.src, train_source);
+    strcpy(train_db.dest, train_dest);
+    strcpy(train_db.train_name, train_name);
+    train_db.flag = 1;
+    train_db.occupied_seats = 0;
+
+    char path_traindb[100] = path; 
+    strcat(path_traindb, "train_db.txt");
+    int train_fd = open(path_traindb, O_CREAT | O_RDWR, 00777);
+    if(train_fd == -1){
+        perror("ERROR OPEN FD!");
+    }
+
+    int fp = lseek(train_fd, 0, SEEK_END);
+    if(fp == 0){
+        train_id = 1;
+        printf("Opened File Successfully!!\n"); 
+        lseek(train_fd, (train_id - 1) * sizeof(train_db), SEEK_SET);
+        train_db.train_id = train_id;
+        int write_status = write(train_fd, &train_db, sizeof(train_db));
+        if(write_status == -1){
+            perror("ERROR WRITE TO FILE");
+        }
+        else{
+            printf("Updated Customer Database!!\n");
+            write(nsd, &train_id, sizeof(train_id));
+        } 
+    }
+    else{
+        struct train dummy;
+        fp = lseek(train_fd, -1 * sizeof(train_db), SEEK_END);
+        read(train_fd, &dummy, sizeof(dummy));
+        train_id = dummy.train_id;
+        train_id++;
+        train_db.train_id = train_id;
+        int write_status = write(train_fd, &train_db, sizeof(train_db));
+        if(write_status == -1){
+            perror("ERROR WRITE TO FILE");
+        }
+        else{
+            printf("Updated Customer Database!!\n");
+            write(nsd, &train_id, sizeof(train_id));
+            }  
+        }
+
+}
+
+void viewTrains(int nsd){
+    printf("<----------------------viewTrains()-------------------------->\n");
+    struct train train_db; 
+    int count = 0;
+    char path_db[100] = path; 
+    strcat(path_db, "train_db.txt");
+    int fd_train = open(path_db, O_RDWR, 00777);
+    printf("<-----------------------FILE LOCKED------------------------->\n");
+    //fcntl(fd_cust, F_SETLKW, &lock); 
+    lseek(fd_train, 0 * sizeof(train_db), SEEK_SET);
+    int fp = lseek(fd_train, 0, SEEK_END);
+    //count = fp / sizeof(db);
+    lseek(fd_train, 0 * sizeof(train_db), SEEK_SET);
+    while(read(fd_train, &train_db, sizeof(train_db))){
+        if(train_db.flag == 1)
+        count++;
+        /*todo: Add seats */
+        printf("count in loop : %d\n", count);
+        printf("flag value : %d\n", train_db.flag);
+    }
+    printf("count : %d", count);
+    if(count > 0){
+        write(nsd, &count, sizeof(count));
+        lseek(fd_train, 0 * sizeof(train_db), SEEK_SET);
+        while(count-- > 0){
+            read(fd_train, &train_db, sizeof(train_db));
+            int seats_left = train_db.total_seats - train_db.occupied_seats;
+            if(train_db.flag == 1){
+                sleep(1);
+                write(nsd, &train_db.train_name, sizeof(train_db.train_name));
+                sleep(1);
+                write(nsd, &train_db.train_id, sizeof(train_db.train_id));
+                sleep(1);
+                write(nsd, &train_db.src, sizeof(train_db.src));
+                sleep(1);
+                write(nsd, &train_db.dest, sizeof(train_db.dest));
+                sleep(1);
+                write(nsd, &seats_left, sizeof(seats_left));
+            }
+        }
+    }
+    else{
+        count = -1;
+        write(nsd, &count, sizeof(count));
+        printf("<--------NO TRAINS IN DB------->\n");  
+    }
+}
 /*-------------------------------------------------Authentication----------------------------------------------*/
 int isAuthenticated(int nsd, int userid, char password[30], int type){
     struct flock lock;

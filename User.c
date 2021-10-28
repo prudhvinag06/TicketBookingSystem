@@ -196,7 +196,7 @@ void helper(int sd, int client_id, char client_type[30]){
             }
         }
         else if(choice == 2){ //trains
-            printf("1. View Trains");
+            printf("1. View Trains\n");
             printf("2. Add Train\n");
             printf("3. Delete Train\n");
             printf("4. Modify Train Details\n");
@@ -224,9 +224,6 @@ void helper(int sd, int client_id, char client_type[30]){
             break;
             }
         }
-        
-
-
     }
 
 }
@@ -243,10 +240,8 @@ void viewRecords(int sd){
         }
    }
    else{
-       printf("<--------NO USERS IN DB------->\n");
+       printf("<--------NO USERS IN DB--------->\n");
    }
-  
-    
 }
 
 void signup(int sd){
@@ -305,10 +300,56 @@ void searchUser(int sd){
 
 
 void viewTrains(int sd){
+    int train_id, count = 0, seats_left = 0;
+    char train_name[30], train_src[30], train_dest[30];
+    read(sd, &count, sizeof(count));
+    if(count > 0){
+        printf("Total Number of users : %d\n", count);
+        while(count--){
+           
+            read(sd, &train_name, sizeof(train_name));
+            read(sd, &train_id, sizeof(train_id));
+            read(sd, &train_src, sizeof(train_src));
+            read(sd, &train_dest, sizeof(train_dest));
+            read(sd, &seats_left, sizeof(seats_left));
+            printf("TRAIN ID: %d  TRAIN NAME : %s\n", train_id, train_name);
+            printf("TRAIN SRC: %s  TRAIN DEST : %s\n SEATS LEFT : %d\n", train_src, train_dest, seats_left);
+            printf("********************************\n");
+        }
+    }
+    else{
+       printf("<--------NO TRAINS IN DB--------->\n");
+    }
+}
+
+void addTrains(int sd){
+    int x, total_seats, train_id;
+    char train_name[30], train_source[30], train_dest[30];
+    //read(sd, &x, sizeof(x));
+    //printf("Testing check : %d\n", x);
+    printf("Enter Train Name :\n");
+    scanf("%s", train_name);
+    printf("Enter Total Seats In Train : \n");
+    scanf("%d", &total_seats);
+    printf("Enter Starting Point : \n");
+    scanf("%s", train_source);
+    printf("Enter Destination Point : \n");
+    scanf("%s", train_dest);
+    write(sd, &train_name, sizeof(train_name));
+    write(sd, &total_seats, sizeof(total_seats));
+    write(sd, &train_source, sizeof(train_source));
+    write(sd, &train_dest, sizeof(train_dest));
+
+    read(sd, &train_id, sizeof(train_id));
+    printf("Train id of train : %d\n", train_id);
 
 
 }
 
-void addTrains(int sd){
-    
+void deleteTrain(int sd){
+
+}
+
+void searchTrain(int sd){
+
 }
