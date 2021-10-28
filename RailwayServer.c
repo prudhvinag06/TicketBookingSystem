@@ -16,6 +16,7 @@
 
 
 static int id = 1;
+static int train_id = 1;
 struct user{
     int user_id;
     char user_name[30];
@@ -56,6 +57,8 @@ void signup_admin(int nsd);
 void viewRecords(int nsd);
 void deleteRecord(int nsd);
 int isExists(int nsd, int id, char password[30], int type);
+void searchUser(int nsd);
+void unlock(int fd, struct flock lock);
 int main(){
     struct sockaddr_in serv, cli;
     int sd, sz, nsd;
@@ -114,11 +117,19 @@ void signup(int nsd, char username[30], char password[30], char typeofuser[30]){
     todo : Add file locking where ever necessary.
     */
     struct user db; 
-    db.user_id = id;    
+    // db.user_id = id;    
     strcpy(db.user_name, username);
     strcpy(db.password, password);
     db.flag = 1;
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
     if(strcmp(typeofuser, "customer") == 0){ //customer
+        
+        int fp_user;
         db.user_type = 1;
         char path_userdb[100] = path; 
         strcat(path_userdb, "user_db.txt");
@@ -126,15 +137,42 @@ void signup(int nsd, char username[30], char password[30], char typeofuser[30]){
         if(user_fd == -1){
             perror("ERROR OPEN FD!");
         }
-        printf("Opened File Successfully!!\n"); 
-        lseek(user_fd, (id - 1) * sizeof(db), SEEK_SET);
-        int write_status = write(user_fd, &db, sizeof(db));
-        if(write_status == -1){
+        printf("Before entering into the CS \n");
+        
+        fcntl(user_fd, F_SETLKW, &lock);
+        int fp = lseek(user_fd, 0, SEEK_END);
+        if(fp == 0){
+            id = 1;
+            printf("Opened File Successfully!!\n"); 
+            lseek(user_fd, (id - 1) * sizeof(db), SEEK_SET);
+            db.user_id = id;
+            int write_status = write(user_fd, &db, sizeof(db));
+            if(write_status == -1){
             perror("ERROR WRITE TO FILE");
+            }
+            else{
+                printf("Updated Customer Database!!\n");
+                write(nsd, &id, sizeof(id));
+            }
+            
         }
-        printf("Updated Customer Database!!\n");
-        write(nsd, &id, sizeof(id));
-        id++; 
+        else{
+            struct user dummy;
+            fp = lseek(user_fd, -1 * sizeof(db), SEEK_END);
+            read(user_fd, &dummy, sizeof(dummy));
+            id = dummy.user_id;
+            id++;
+            db.user_id = id;
+            int write_status = write(user_fd, &db, sizeof(db));
+            if(write_status == -1){
+            perror("ERROR WRITE TO FILE");
+            }
+            else{
+            printf("Updated Customer Database!!\n");
+            write(nsd, &id, sizeof(id));
+            }  
+        }
+            unlock(user_fd, lock);
     }
     else if(strcmp(typeofuser, "agent") == 0){ //agent
         db.user_type = 2;
@@ -145,14 +183,40 @@ void signup(int nsd, char username[30], char password[30], char typeofuser[30]){
             perror("ERROR OPEN FD!");
         }
         printf("Opened File Successfully!!\n"); 
-        lseek(agent_fd, (id - 1) * sizeof(db), SEEK_SET);
-        int write_status = write(agent_fd, &db, sizeof(db));
-        if(write_status == -1){
+        printf("Before entering into the CS \n");
+        fcntl(agent_fd, F_SETLKW, &lock);
+        int fp = lseek(agent_fd, 0, SEEK_END);
+        if(fp == 0){
+            id = 1;
+            printf("Opened File Successfully!!\n"); 
+            lseek(agent_fd, (id - 1) * sizeof(db), SEEK_SET);
+            db.user_id = id;
+            int write_status = write(agent_fd, &db, sizeof(db));
+            if(write_status == -1){
             perror("ERROR WRITE TO FILE");
+            }
+            else{
+                printf("Updated Agent Database!!\n");
+                write(nsd, &id, sizeof(id));
+            }    
         }
-        printf("Updated Agent Database!!\n"); 
-        write(nsd, &id, sizeof(id));
-        id++;
+        else{
+            struct user dummy;
+            fp = lseek(agent_fd, -1 * sizeof(db), SEEK_END);
+            read(agent_fd, &dummy, sizeof(dummy));
+            id = dummy.user_id;
+            id++;
+            db.user_id = id;
+            int write_status = write(agent_fd, &db, sizeof(db));
+            if(write_status == -1){
+            perror("ERROR WRITE TO FILE");
+            }
+            else{
+            printf("Updated Agent Database!!\n");
+            write(nsd, &id, sizeof(id));
+            }  
+        } 
+           unlock(agent_fd, lock);
     }   
     else if(strcmp(typeofuser, "admin") == 0){ //admin
         db.user_type = 3;
@@ -163,14 +227,40 @@ void signup(int nsd, char username[30], char password[30], char typeofuser[30]){
             perror("ERROR OPEN FD!");
         }
         printf("Opened File Successfully!!\n"); 
-        lseek(admin_fd, (id - 1) * sizeof(db), SEEK_SET);
-        int write_status = write(admin_fd, &db, sizeof(db));
-        if(write_status == -1){
+        printf("Before entering into the CS \n");
+        fcntl(admin_fd, F_SETLKW, &lock);
+        int fp = lseek(admin_fd, 0, SEEK_END);
+        if(fp == 0){
+            id = 1;
+            printf("Opened File Successfully!!\n"); 
+            lseek(admin_fd, (id - 1) * sizeof(db), SEEK_SET);
+            db.user_id = id;
+            int write_status = write(admin_fd, &db, sizeof(db));
+            if(write_status == -1){
             perror("ERROR WRITE TO FILE");
+            }
+            else{
+                printf("Updated Admin Database!!\n");
+                write(nsd, &id, sizeof(id));
+            }    
         }
-        printf("Updated Admin Database!!\n");
-        write(nsd, &id, sizeof(id));
-        id++; 
+        else{
+            struct user dummy;
+            fp = lseek(admin_fd, -1 * sizeof(db), SEEK_END);
+            read(admin_fd, &dummy, sizeof(dummy));
+            id = dummy.user_id;
+            id++;
+            db.user_id = id;
+            int write_status = write(admin_fd, &db, sizeof(db));
+            if(write_status == -1){
+            perror("ERROR WRITE TO FILE");
+            }
+            else{
+            printf("Updated Admin Database!!\n");
+            write(nsd, &id, sizeof(id));
+            }  
+        } 
+        unlock(admin_fd, lock);
     }
 }
 void login(int nsd, int userid, char username[30], char password[30], char typeofuser[30]){
@@ -309,6 +399,9 @@ void admin_handler(int nsd, int userid, char username[30], char password[30], ch
         else if(choice == 3){
             deleteRecord(nsd);
         }
+        else if(choice == 5){
+            searchUser(nsd);
+        }
     }
     else if(choice == 2){ //trains list
         printf("Trains List was selected\n");
@@ -317,6 +410,12 @@ void admin_handler(int nsd, int userid, char username[30], char password[30], ch
 
 /*-------------------------------------------------Authentication----------------------------------------------*/
 int isAuthenticated(int nsd, int userid, char password[30], int type){
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
     struct user db;
     char path_db[100] = path; 
     if(type == 1){
@@ -328,10 +427,11 @@ int isAuthenticated(int nsd, int userid, char password[30], int type){
     else {
         strcat(path_db, "admin_db.txt");
     }
-    int fd = open(path_db, O_RDWR, 00777);    
+    int fd = open(path_db, O_RDWR, 00777);  
+    fcntl(fd, F_SETLKW, &lock); 
     lseek(fd, (userid - 1) * sizeof(db), SEEK_SET);
     read(fd, &db, sizeof(db));
-    
+    unlock(fd, lock);
     if(strcmp(password, db.password) == 0)
     return 1;
     else
@@ -339,12 +439,21 @@ int isAuthenticated(int nsd, int userid, char password[30], int type){
 }
 
 void viewRecords(int nsd){
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+
     printf("<----------------------viewRecords()-------------------------->\n");
     struct user db; 
     int count = 0;
     char path_db[100] = path; 
     strcat(path_db, "user_db.txt");
     int fd_cust = open(path_db, O_RDWR, 00777);
+    printf("<-----------------------FILE LOCKED------------------------->\n");
+    fcntl(fd_cust, F_SETLKW, &lock); 
     lseek(fd_cust, 0 * sizeof(db), SEEK_SET);
     int fp = lseek(fd_cust, 0, SEEK_END);
     //count = fp / sizeof(db);
@@ -371,6 +480,7 @@ void viewRecords(int nsd){
         write(nsd, &count, sizeof(count));
         printf("<--------NO USERS IN DB------->\n");  
     }
+    unlock(fd_cust, lock);
     
 }
 
@@ -381,13 +491,13 @@ void signup_admin(int nsd){
     printf("reached signup_admin page\n");
     read(nsd, &password, sizeof(password));
     read(nsd, &typeofuser, sizeof(typeofuser));
-    printf("dasfdsf");
     signup(nsd, username, password, typeofuser);
 }
 
 int isExists(int nsd, int id, char password[30], int type){
     struct user db;
-    char path_db[100] = path; 
+    char path_db[100] = path;
+
     if(type == 1){
         strcat(path_db, "user_db.txt");
     }
@@ -397,9 +507,19 @@ int isExists(int nsd, int id, char password[30], int type){
     else {
         strcat(path_db, "admin_db.txt");
     }
-    int fd = open(path_db, O_RDWR, 00777);    
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+    
+    int fd = open(path_db, O_RDWR, 00777); 
+    printf("Entering Lock !\n");  
+    fcntl(fd, F_SETLKW, &lock); 
     lseek(fd, (id - 1) * sizeof(db), SEEK_SET);
     read(fd, &db, sizeof(db));
+    unlock(fd, lock);
     
     if(db.flag == 0)
     return 0;
@@ -408,12 +528,20 @@ int isExists(int nsd, int id, char password[30], int type){
 }
 
 void deleteRecord(int nsd){
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
     int user_id;
     struct user db;
     int count = 0;
     char path_db[100] = path; 
     strcat(path_db, "user_db.txt"); 
     int fd_cust = open(path_db, O_RDWR, 00777);
+    printf("LOCKED \n");
+    fcntl(fd_cust, F_SETLKW, &lock);
     read(nsd, &user_id, sizeof(user_id));
     printf("user id from client : %d\n", user_id);
     lseek(fd_cust, (user_id - 1) * sizeof(db), SEEK_SET);
@@ -422,8 +550,55 @@ void deleteRecord(int nsd){
     db.flag = 0;
     lseek(fd_cust, (user_id - 1) * sizeof(db), SEEK_SET);
     write(fd_cust, &db, sizeof(db));
+    unlock(fd_cust, lock);
+}
 
+void searchUser(int nsd){
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+    int user_id;
+    struct user db;
+    int count = 0;
+    char path_db[100] = path; 
+    strcat(path_db, "user_db.txt"); 
+    int fd_cust = open(path_db, O_RDWR, 00777);
 
+    printf("LOCKED \n");
+    fcntl(fd_cust, F_SETLKW, &lock);
+    read(nsd, &user_id, sizeof(user_id));
+    lseek(fd_cust, (user_id - 1) * sizeof(db), SEEK_SET);
+    read(fd_cust,&db, sizeof(db));
+    printf("name : %s\n", db.user_name);
+    printf("id : %d\n", db.user_id);
+    printf("type : %d\n", db.user_type);
+    unlock(fd_cust, lock);
+    write(nsd, &db.user_name, sizeof(db.user_name));
+    write(nsd, &db.user_id, sizeof(db.user_id));
+    write(nsd, &db.user_type, sizeof(db.user_type));
+}
+
+void unlock(int fd, struct flock lock){
+    printf("Press Enter to unlock \n");
+    getchar();
+    lock.l_type = F_ULOCK;
+    printf("Unlocked \n");   
+    fcntl(fd, F_SETLK, &lock);
 }
 
 
+
+/*
+
+struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+    fcntl(fd_cust, F_SETLKW, &lock);
+
+*/

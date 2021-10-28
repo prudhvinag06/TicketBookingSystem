@@ -13,7 +13,11 @@ void helper(int sd, int client_id, char client_type[30]);
 void viewRecords(int sd);
 void signup(int sd);
 void deleteUser(int sd);
-
+void searchUser(int sd);
+void viewTrains(int sd);
+void addTrains(int sd);
+void deleteTrain(int sd);
+void searchTrain(int sd);
 
 
 /*---------------------------------------------Client-------------------------------------------*/
@@ -185,7 +189,7 @@ void helper(int sd, int client_id, char client_type[30]){
             //modifyUser();
             break;
             case 5:
-            //searchUser();
+            searchUser(sd);
             break;
             default:
             break;
@@ -199,6 +203,26 @@ void helper(int sd, int client_id, char client_type[30]){
             printf("5. Search Train\n");
             scanf("%d", &choice);
             write(sd, &choice, sizeof(choice));
+            switch (choice)
+            {
+            case 1:
+            viewTrains(sd);
+            break;
+            case 2:
+            addTrains(sd);
+            break;
+            case 3:
+            deleteTrain(sd);
+            break;
+            case 4:
+            //modifyTrain();
+            break;
+            case 5:
+            searchTrain(sd);
+            break;
+            default:
+            break;
+            }
         }
         
 
@@ -264,4 +288,27 @@ void deleteUser(int sd){
     scanf("%d", &user_id);
     write(sd, &user_id, sizeof(user_id));
     printf("<-----------------DELETION SUCCESS-------------------->\n");
+}
+
+void searchUser(int sd){
+    int user_id, type;
+    char name[30];
+    printf("Select the User you want to search : \n");
+    scanf("%d", &user_id);
+    write(sd, &user_id, sizeof(user_id));
+    read(sd, &name, sizeof(name));
+    read(sd, &user_id, sizeof(user_id));
+    read(sd, &type, sizeof(type));
+
+    printf("<-----------------SEARCH SUCCESS-------------------->\n");
+}
+
+
+void viewTrains(int sd){
+
+
+}
+
+void addTrains(int sd){
+    
 }
