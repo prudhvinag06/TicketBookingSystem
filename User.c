@@ -18,7 +18,10 @@ void viewTrains(int sd);
 void addTrains(int sd);
 void deleteTrain(int sd);
 void searchTrain(int sd);
-
+void bookTicket(int sd, int client_id, int type);
+void viewTicket(int sd, int client_id, int type);
+void updateBooking(int sd, int client_id, int type);
+void cancelBooking(int sd, int client_id, int type);
 
 /*---------------------------------------------Client-------------------------------------------*/
 int main(int argc, char * argv[]){
@@ -131,7 +134,51 @@ int main(int argc, char * argv[]){
         printf("Login id of user : %d\n", user_id);
     }
 }
+/*--------------------------------------------User Ticket Operations()---------------------------------------------------------------*/
+void bookTicket(int sd, int client_id, int type){
+    viewTrains(sd);
 
+    int train_id, no_tkts, msg = 1;
+    printf("Enter The Train Id You Want To Book \n");
+    scanf("%d", &train_id);
+    printf("Enter Number of tickets You Want To Book \n");
+    scanf("%d", &no_tkts);
+    write(sd, &train_id, sizeof(train_id));
+    write(sd, &no_tkts, sizeof(no_tkts));
+    while(msg == 1){
+        read(sd, &msg, sizeof(msg));
+        if(msg == 1){
+            int x;
+            read(sd, &x, sizeof(x));
+            printf("Warning : The number of available tickets are : %d\n", x);
+            printf("Please Re-Enter the Number of Tickets you want to Book \n");
+            scanf("%d", &no_tkts);
+            write(sd, &no_tkts, sizeof(no_tkts));
+            if(x >= no_tkts)
+            msg = 0;
+        }
+        else break;
+    }
+    printf("CONGRATS!!....BOOKING CONFIRMED\n");
+
+}
+void viewTicket(int sd, int client_id, int type){
+    //viewTrains(sd);
+    int train_id, no_tkts, msg = 1;
+    write(sd, &client_id, sizeof(client_id));
+    char train_name[30];
+    read(sd, &no_tkts, sizeof(train_id));
+    if(train_id == -1){
+        printf("NO BOOKINGS AVAILABLE \n");
+    }
+    else{
+        read(sd, &train_id, sizeof(train_id));
+        read(sd, &train_name, sizeof(train_name));
+        printf("TRAIN ID: %d  TRAIN NAME : %s  NO. OF TICKETS : %d\n", train_id, train_name, no_tkts);
+    }
+}
+void updateBooking(int sd, int client_id, int type){}
+void cancelBooking(int sd, int client_id, int type){}
 /*--------------------------------------------helper()---------------------------------------------------------------*/
 void helper(int sd, int client_id, char client_type[30]){
     int type = -1;
@@ -151,6 +198,23 @@ void helper(int sd, int client_id, char client_type[30]){
 		printf("4. Cancel booking\n");
         scanf("%d", &choice);
         write(sd, &choice, sizeof(choice));
+
+        switch (choice)
+        {
+        case 1: 
+        bookTicket(sd, client_id, type);
+        break;
+        case 2:
+        viewTicket(sd, client_id, type);
+        break;
+        case 3:
+        updateBooking(sd, client_id, type);
+        case 4:
+        cancelBooking(sd, client_id, type);
+        default:
+            break;
+        }
+     
 
     }
     else if(type == 3){
@@ -228,7 +292,7 @@ void helper(int sd, int client_id, char client_type[30]){
 
 }
 void viewRecords(int sd){
-   int user_id, count = 0;
+   int user_id, count = 0, train_id, tcks;
    char user_name[30];
    read(sd, &count, sizeof(count));
    if(count > 0){
@@ -236,7 +300,10 @@ void viewRecords(int sd){
         while(count--){
             read(sd, &user_name, sizeof(user_name));
             read(sd, &user_id, sizeof(user_id));
-            printf("USER ID: %d  USER NAME : %s\n", user_id, user_name);
+            read(sd, &train_id, sizeof(train_id));
+            read(sd, &tcks, sizeof(tcks));
+
+            printf("USER ID: %d  USER NAME : %s  TRAIN ID : %d NO. OF TICKETS : %d\n", user_id, user_name, train_id, tcks);
         }
    }
    else{
