@@ -177,8 +177,30 @@ void viewTicket(int sd, int client_id, int type){
         printf("TRAIN ID: %d  TRAIN NAME : %s  NO. OF TICKETS : %d\n", train_id, train_name, no_tkts);
     }
 }
-void updateBooking(int sd, int client_id, int type){}
-void cancelBooking(int sd, int client_id, int type){}
+void updateBooking(int sd, int client_id, int type){
+    int available_tickets = 0, updated_tickets;
+    write(sd, &client_id, sizeof(client_id));
+    read(sd, &available_tickets, sizeof(available_tickets));
+    printf("AVAILABLE TICKETS : %d \n", available_tickets);
+    printf("ENTER THE UPDATED VALUE OF TICKETS : \n");
+    scanf("%d", &updated_tickets);
+    while(updated_tickets > available_tickets){
+        printf("%d TICKETS NOT AVAILABLE. PLEASE ENTER VALUE LESS THAN %d: \n", updated_tickets, available_tickets);
+        scanf("%d", &updated_tickets);
+    }
+    write(sd, &updated_tickets, sizeof(updated_tickets));
+    printf("UPDATED SUCCESSFULLY \n");
+
+
+}
+void cancelBooking(int sd, int client_id, int type){
+    write(sd, &client_id, sizeof(client_id));
+}
+
+
+
+
+
 /*--------------------------------------------helper()---------------------------------------------------------------*/
 void helper(int sd, int client_id, char client_type[30]){
     int type = -1;
@@ -232,8 +254,7 @@ void helper(int sd, int client_id, char client_type[30]){
             printf("2. Add User\n");
             //call modified signup() function
             printf("3. Delete User\n");
-            printf("4. Modify User\n");
-            printf("5. Search\n");
+            printf("4. Search\n");
             scanf("%d", &choice);
             printf("choice : %d\n", choice);
             int x = write(sd, &choice, sizeof(choice));
@@ -250,9 +271,6 @@ void helper(int sd, int client_id, char client_type[30]){
             deleteUser(sd);
             break;
             case 4:
-            //modifyUser();
-            break;
-            case 5:
             searchUser(sd);
             break;
             default:
@@ -371,7 +389,7 @@ void viewTrains(int sd){
     char train_name[30], train_src[30], train_dest[30];
     read(sd, &count, sizeof(count));
     if(count > 0){
-        printf("Total Number of users : %d\n", count);
+        printf("Total Number of Trains : %d\n", count);
         while(count--){
            
             read(sd, &train_name, sizeof(train_name));
@@ -414,9 +432,24 @@ void addTrains(int sd){
 }
 
 void deleteTrain(int sd){
-
+    int user_id;
+    viewTrains(sd);
+    printf("Select the train you want to delete : \n");
+    scanf("%d", &user_id);
+    write(sd, &user_id, sizeof(user_id));
+    printf("<-----------------DELETION SUCCESS-------------------->\n");
 }
 
 void searchTrain(int sd){
+    int user_id, type;
+    char name[30], flag = 0;
+    printf("Select the Train ID you want to search : \n");
+    scanf("%d", &user_id);
+    write(sd, &user_id, sizeof(user_id));
+    read(sd, &flag, sizeof(flag));
+    read(sd, &name, sizeof(name));
+    read(sd, &user_id, sizeof(user_id));
+    read(sd, &type, sizeof(type));
 
+    printf("<-----------------SEARCH SUCCESS-------------------->\n");
 }

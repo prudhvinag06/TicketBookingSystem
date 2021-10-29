@@ -423,21 +423,92 @@ void customer_handler(int nsd, int userid, char username[30], char password[30],
             char trainname[30];
             strcpy(trainname, train_db.train_name);
             printf("EXPRESS : %s\n", trainname);
-             printf("TRAIN ID: %d  TRAIN NAME : %s  NO. OF TICKETS : %d\n", db.train_id, train_db.train_name, db.tickets_booked);
+            printf("TRAIN ID: %d  TRAIN NAME : %s  NO. OF TICKETS : %d\n", db.train_id, train_db.train_name, db.tickets_booked);
             write(nsd, &db.tickets_booked, sizeof(db.tickets_booked));
-            
             write(nsd, &db.train_id, sizeof(db.train_id));
-            
             write(nsd, &train_db.train_name, sizeof(train_db.train_name));
-
         }
-
-
     }
     else if(choice == 3){
+        //UPDATE BOOKING
+        int client_id, fd_user, updated_tickets, train_id;
+        struct user db;
+        struct train train_db;
+        read(nsd, &client_id, sizeof(client_id));
+
+        //user data reading from file
+        char path_db[100] = path;
+        strcat(path_db, "user_db.txt");
+        int fd_cust = open(path_db, O_RDWR, 00777);
+        lseek(fd_cust, (client_id - 1) * sizeof(db), SEEK_SET);
+        read(fd_cust, &db, sizeof(db));
+        
+        train_id = db.train_id;
+        // read(nsd, &updated_tickets, sizeof(updated_tickets));
+        // printf("Updated tickets : %d\n", updated_tickets);
+
+        char train_path_db[100] = path; 
+        strcat(train_path_db, "train_db.txt");
+        int fd_train = open(train_path_db, O_RDWR, 00777);
+        lseek(fd_train, (train_id - 1) * sizeof(train_db), SEEK_SET);
+        read(fd_train, &train_db, sizeof(train_db));
+
+        train_db.occupied_seats = train_db.occupied_seats - db.tickets_booked;
+        int available = train_db.total_seats - train_db.occupied_seats;
+        write(nsd, &available, sizeof(available));
+        read(nsd, &updated_tickets, sizeof(updated_tickets));
+        printf("Updated tickets : %d\n", updated_tickets);
+
+        db.tickets_booked = updated_tickets;
+        train_db.occupied_seats += updated_tickets;
+        printf("%d \n",train_db.occupied_seats);
+        printf("%d \n",db.tickets_booked);
+        lseek(fd_train, (- 1) * sizeof(train_db), SEEK_CUR);
+        write(fd_train, &train_db, sizeof(train_db));
+
+        lseek(fd_cust, (- 1) * sizeof(db), SEEK_CUR);
+        write(fd_cust, &db, sizeof(db));
+        
+        printf("Updated Successfully \n");
 
     }
     else if(choice == 4){
+        int client_id, train_id;
+        struct user db;
+        struct train train_db;
+        read(nsd, &client_id, sizeof(client_id));
+
+        char path_db[100] = path;
+        strcat(path_db, "user_db.txt");
+        int fd_cust = open(path_db, O_RDWR, 00777);
+        lseek(fd_cust, (client_id - 1) * sizeof(db), SEEK_SET);
+        read(fd_cust, &db, sizeof(db));
+
+        train_id = db.train_id;
+
+        char train_path_db[100] = path; 
+        strcat(train_path_db, "train_db.txt");
+        int fd_train = open(train_path_db, O_RDWR, 00777);
+        lseek(fd_train, (train_id - 1) * sizeof(train_db), SEEK_SET);
+        read(fd_train, &train_db, sizeof(train_db));
+
+        
+        train_db.occupied_seats -= db.tickets_booked;
+        db.tickets_booked = 0;
+        db.train_id = 0;
+
+        printf("%d \n",train_db.occupied_seats);
+        printf("%d \n",db.tickets_booked);
+
+        lseek(fd_train, (- 1) * sizeof(train_db), SEEK_CUR);
+        write(fd_train, &train_db, sizeof(train_db));
+
+        lseek(fd_cust, (- 1) * sizeof(db), SEEK_CUR);
+        write(fd_cust, &db, sizeof(db));
+
+        printf("Updated Successfully \n");
+
+
 
     }
 
@@ -521,12 +592,68 @@ void admin_handler(int nsd, int userid, char username[30], char password[30], ch
             //add trains
         }
         else if(choice == 3){
-            //delete trains
+            deleteTrain(nsd);
         }
-        else if(choice == 5){
-            //search train
+        else if(choice == 4){
+            searchTrain(nsd);
         }
     }
+}
+void searchTrain(int nsd){
+    int train_id;
+
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+    int user_id;
+    struct user db;
+    int count = 0;
+    char path_db[100] = path; 
+    strcat(path_db, "user_db.txt"); 
+    int fd_cust = open(path_db, O_RDWR, 00777);
+
+    printf("LOCKED \n");
+    fcntl(fd_cust, F_SETLKW, &lock);
+    read(nsd, &user_id, sizeof(user_id));
+    lseek(fd_cust, (user_id - 1) * sizeof(db), SEEK_SET);
+    read(fd_cust,&db, sizeof(db));
+    printf("name : %s\n", db.user_name);
+    printf("id : %d\n", db.user_id);
+    printf("type : %d\n", db.user_type);
+    unlock(fd_cust, lock);
+    write(nsd, &db.user_name, sizeof(db.user_name));
+    write(nsd, &db.user_id, sizeof(db.user_id));
+    write(nsd, &db.user_type, sizeof(db.user_type));
+}
+
+void deleteTrain(int nsd){
+    struct flock lock;
+	lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+    viewTrains(nsd);
+    int train_id;
+    struct train train_db;
+    read(nsd, &train_id, sizeof(train_id));
+    printf("Train ID Received from Client : %d\n",train_id);
+
+    char train_path_db[100] = path; 
+    strcat(train_path_db, "train_db.txt");
+    int fd_train = open(train_path_db, O_RDWR, 00777);
+    fcntl(fd_train, F_SETLKW, &lock);
+    lseek(fd_train, (train_id - 1) * sizeof(train_db), SEEK_SET);
+    read(fd_train, &train_db, sizeof(train_db));
+
+    train_db.flag = 0;
+
+    lseek(fd_train, (- 1) * sizeof(train_db), SEEK_CUR);
+    write(fd_train, &train_db, sizeof(train_db));
+    unlock(fd_train, lock);
 }
 
 void addTrains(int nsd){
