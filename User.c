@@ -281,8 +281,7 @@ void helper(int sd, int client_id, char client_type[30]){
             printf("1. View Trains\n");
             printf("2. Add Train\n");
             printf("3. Delete Train\n");
-            printf("4. Modify Train Details\n");
-            printf("5. Search Train\n");
+            printf("4. Search Train\n");
             scanf("%d", &choice);
             write(sd, &choice, sizeof(choice));
             switch (choice)
@@ -297,9 +296,6 @@ void helper(int sd, int client_id, char client_type[30]){
             deleteTrain(sd);
             break;
             case 4:
-            //modifyTrain();
-            break;
-            case 5:
             searchTrain(sd);
             break;
             default:
@@ -441,15 +437,15 @@ void deleteTrain(int sd){
 }
 
 void searchTrain(int sd){
-    int user_id, type;
+    int train_id, type;
     char name[30], flag = 0;
     printf("Select the Train ID you want to search : \n");
-    scanf("%d", &user_id);
-    write(sd, &user_id, sizeof(user_id));
-    read(sd, &flag, sizeof(flag));
+    scanf("%d", &train_id);
+    write(sd, &train_id, sizeof(train_id));
     read(sd, &name, sizeof(name));
-    read(sd, &user_id, sizeof(user_id));
+    read(sd, &train_id, sizeof(train_id));
     read(sd, &type, sizeof(type));
-
+    printf("Name of Train : %s\n", name);
+    printf("Number of seats : %d\n", type);
     printf("<-----------------SEARCH SUCCESS-------------------->\n");
 }

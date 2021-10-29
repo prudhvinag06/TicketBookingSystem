@@ -609,24 +609,24 @@ void searchTrain(int nsd){
     lock.l_len = 0;
     lock.l_pid = getpid();
     int user_id;
-    struct user db;
+    struct train train_db;
     int count = 0;
     char path_db[100] = path; 
-    strcat(path_db, "user_db.txt"); 
-    int fd_cust = open(path_db, O_RDWR, 00777);
+    strcat(path_db, "train_db.txt"); 
+    int fd_train = open(path_db, O_RDWR, 00777);
 
     printf("LOCKED \n");
-    fcntl(fd_cust, F_SETLKW, &lock);
-    read(nsd, &user_id, sizeof(user_id));
-    lseek(fd_cust, (user_id - 1) * sizeof(db), SEEK_SET);
-    read(fd_cust,&db, sizeof(db));
-    printf("name : %s\n", db.user_name);
-    printf("id : %d\n", db.user_id);
-    printf("type : %d\n", db.user_type);
-    unlock(fd_cust, lock);
-    write(nsd, &db.user_name, sizeof(db.user_name));
-    write(nsd, &db.user_id, sizeof(db.user_id));
-    write(nsd, &db.user_type, sizeof(db.user_type));
+    fcntl(fd_train, F_SETLKW, &lock);
+    read(nsd, &train_id, sizeof(user_id));
+    lseek(fd_train, (train_id - 1) * sizeof(train_db), SEEK_SET);
+    read(fd_train,&train_db, sizeof(train_db));
+    printf("Train name : %s\n", train_db.train_name);
+    printf("id : %d\n", train_db.train_id);
+    printf("Total Seats : %d\n", train_db.total_seats);
+    unlock(fd_train, lock);
+    write(nsd, &train_db.train_name, sizeof(train_db.train_name));
+    write(nsd, &train_db.train_id, sizeof(train_db.train_id));
+    write(nsd, &train_db.total_seats, sizeof(train_db.total_seats));
 }
 
 void deleteTrain(int nsd){
