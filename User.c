@@ -40,7 +40,7 @@ int main(int argc, char * argv[]){
     }
 /*--------------------------------------------Initialization------------------------------------*/
     int choice;
-    write(sd, &client_number, sizeof(client_number));
+   // write(sd, &client_number, sizeof(client_number));
     //read(sd, &client_number, sizeof(client_number));
     //printf("Server Says : %d\n", client_number);
     printf("Select the type : \n");
@@ -72,8 +72,9 @@ int main(int argc, char * argv[]){
         else{
             strcpy(client_type, "agent");
         }
-        // write(sd, &client_id, sizeof(client_id));
+       write(sd, &client_id, sizeof(client_id));
         int val = 1;
+       
         write(sd, &val, sizeof(val));
         write(sd, &client_id, sizeof(client_id));
         write(sd, &client_name, sizeof(client_name));
@@ -96,6 +97,8 @@ int main(int argc, char * argv[]){
         printf("\tLOGGED IN SUCCESSFULLY\n");
         helper(sd, client_id, client_type);
         }
+        
+       
         
         /*
         Can add if user doesn't exist u can call signup function
@@ -258,7 +261,8 @@ void helper(int sd, int client_id, char client_type[30]){
             scanf("%d", &choice);
             printf("choice : %d\n", choice);
             int x = write(sd, &choice, sizeof(choice));
-            printf("%d\n",x);
+            
+
             switch (choice)
             {
             case 1:
@@ -347,7 +351,7 @@ void signup(int sd){
             strcpy(client_type, "agent");
         }
         int x = write(sd, &client_name, sizeof(client_name));
-        printf("x : %d",x);
+        
         sleep(1);
         write(sd, &client_password, sizeof(client_password));
         sleep(1);

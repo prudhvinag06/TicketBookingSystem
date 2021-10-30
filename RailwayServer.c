@@ -97,6 +97,7 @@ void client_handler(int nsd, struct sockaddr_in cli, int sd){
     
     read(nsd, &client_number, sizeof(client_number));
     printf("Client Connected : %d \n", client_number);
+    //printf("Client Connected \n");
     read(nsd, &choice, sizeof(choice));
     if(choice == 1){ //login
         read(nsd, &userid, sizeof(userid));
@@ -572,7 +573,7 @@ void agent_handler(int nsd, int userid, char username[30], char password[30], ch
         }
         
         char path_db[100] = path; 
-        strcat(path_db, "user_db.txt");
+        strcat(path_db, "agent_db.txt");
         int fd_cust = open(path_db, O_RDWR, 00777);
         fcntl(fd_cust, F_SETLKW, &lock_db); 
         
@@ -607,7 +608,7 @@ void agent_handler(int nsd, int userid, char username[30], char password[30], ch
 
         read(nsd, &client_id, sizeof(client_id));
        
-        strcat(path_db, "user_db.txt");
+        strcat(path_db, "agent_db.txt");
         int fd_cust = open(path_db, O_RDWR, 00777);
         lseek(fd_cust, (client_id - 1) * sizeof(db), SEEK_SET);
         read(fd_cust, &db, sizeof(db));
@@ -654,7 +655,7 @@ void agent_handler(int nsd, int userid, char username[30], char password[30], ch
 
         //user data reading from file
         char path_db[100] = path;
-        strcat(path_db, "user_db.txt");
+        strcat(path_db, "agent_db.txt");
         int fd_cust = open(path_db, O_RDWR, 00777);
         lseek(fd_cust, (client_id - 1) * sizeof(db), SEEK_SET);
         read(fd_cust, &db, sizeof(db));
@@ -701,7 +702,7 @@ void agent_handler(int nsd, int userid, char username[30], char password[30], ch
         read(nsd, &client_id, sizeof(client_id));
 
         char path_db[100] = path;
-        strcat(path_db, "user_db.txt");
+        strcat(path_db, "agent_db.txt");
         int fd_cust = open(path_db, O_RDWR, 00777);
         lseek(fd_cust, (client_id - 1) * sizeof(db), SEEK_SET);
         read(fd_cust, &db, sizeof(db));
@@ -1203,14 +1204,3 @@ void unlock(int fd, struct flock lock){
 
 
 
-/*
-
-struct flock lock;
-	lock.l_type = F_WRLCK;
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
-    lock.l_len = 0;
-    lock.l_pid = getpid();
-    fcntl(fd_cust, F_SETLKW, &lock);
-
-*/
