@@ -420,7 +420,6 @@ void addTrains(int sd){
     write(sd, &total_seats, sizeof(total_seats));
     write(sd, &train_source, sizeof(train_source));
     write(sd, &train_dest, sizeof(train_dest));
-
     read(sd, &train_id, sizeof(train_id));
     printf("Train id of train : %d\n", train_id);
 
