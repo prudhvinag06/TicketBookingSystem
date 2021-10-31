@@ -127,7 +127,7 @@ int main(int argc, char * argv[]){
         else{
             strcpy(client_type, "agent");
         }
-        // write(sd, &client_id, sizeof(client_id));
+        write(sd, &client_id, sizeof(client_id));
         int val = 2;
         write(sd, &val, sizeof(val));
         write(sd, &client_name, sizeof(client_name));

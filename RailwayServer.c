@@ -65,6 +65,7 @@ void addTrains(int nsd);
 void viewTrains(int nsd);
 void deleteTrain(int nsd);
 void searchTrain(int nsd);
+
 int main(){
     struct sockaddr_in serv, cli;
     int sd, sz, nsd;
@@ -74,7 +75,7 @@ int main(){
     serv.sin_addr.s_addr = INADDR_ANY; //specify ip address in double quotes. Else if its same machine we can specify like this.
     serv.sin_port = htons(port);
     bind(sd, (void *)(&serv), sizeof(serv));
-    listen(sd, maxUsers); 
+    listen(sd, maxUsers); //0 is returned on success
     while(1){ 
         int client_number;
         printf("Server listening.......\n"); 
